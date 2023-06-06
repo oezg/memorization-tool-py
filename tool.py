@@ -2,7 +2,7 @@ from flashcard import Flashcard
 
 
 class Tool:
-    def __init__(self):
+    def __init__(self) -> None:
         self.flashcards: list[Flashcard] = []
         self.menu = {
             "1": ("Add flashcards", self.add_flashcards),
@@ -10,7 +10,7 @@ class Tool:
             "3": ("Exit",),
         }
 
-    def add_flashcards(self):
+    def add_flashcards(self) -> None:
         while (option := input("1. Add a new flashcard\n2. Exit\n")) != "2":
             if option == "1":
                 while not (question := input("Question:\n").strip()):
@@ -21,7 +21,7 @@ class Tool:
             else:
                 print(f"{option} is not an option")
 
-    def practice_flashcards(self):
+    def practice_flashcards(self) -> None:
         if self.flashcards:
             for card in self.flashcards:
                 template = f'Question: {card.question}\nPlease press "y" to see the answer or press "n" to skip:\n'
@@ -32,12 +32,12 @@ class Tool:
         else:
             print("There is no flashcard to practice!")
 
-    def main(self):
+    def main(self) -> None:
         while (option := self.get_option()) != "3":
             self.menu[option][1]() if option in self.menu else print(f"{option} is not an option")
         print("Bye!")
 
-    def get_menu(self):
+    def get_menu(self) -> str:
         return "\n".join(f"{i}. {option[0]}" for i, option in self.menu.items())
 
     def get_option(self) -> str:
