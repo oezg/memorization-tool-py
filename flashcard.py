@@ -4,6 +4,7 @@ from sqlalchemy.orm import sessionmaker
 
 Base = declarative_base()
 
+
 class Flashcard(Base):
     __tablename__ = 'flashcard'
 
@@ -18,4 +19,3 @@ Base.metadata.create_all(engine)
 
 def get_session():
     return sessionmaker(bind=engine)()
-
