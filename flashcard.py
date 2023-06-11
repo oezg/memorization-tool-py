@@ -1,20 +1,21 @@
-class Flashcard:
-    def __init__(self, question: str, answer: str) -> None:
-        self._question = question
-        self._answer = answer
+from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 
-    @property
-    def question(self) -> str:
-        return self._question
+Base = declarative_base()
 
-    @question.setter
-    def question(self, value) -> None:
-        self._question = value
+class Flashcard(Base):
+    __tablename__ = 'flashcard'
 
-    @property
-    def answer(self) -> str:
-        return self._answer
+    id = Column(Integer, primary_key=True)
+    question = Column(String)
+    answer = Column(String)
 
-    @answer.setter
-    def answer(self, value) ->None:
-        self._answer = value
+
+engine = create_engine('sqlite:///flashcard.db?check_same_thread=False')
+Base.metadata.create_all(engine)
+
+
+def get_session():
+    return sessionmaker(bind=engine)()
+

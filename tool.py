@@ -1,9 +1,9 @@
-from flashcard import Flashcard
+import flashcard
 
 
 class Tool:
     def __init__(self) -> None:
-        self.flashcards: list[Flashcard] = []
+        self.session = flashcard.get_session()
         self.menu = {
             "1": ("Add flashcards", self.add_flashcards),
             "2": ("Practice flashcards", self.practice_flashcards),
@@ -17,20 +17,39 @@ class Tool:
                     ...
                 while not (answer := input("Answer:\n").strip()):
                     ...
-                self.flashcards.append(Flashcard(question, answer))
+                card = flashcard.Flashcard(question=question, answer=answer)
+                self.session.add(card)
+                self.session.commit()
             else:
                 print(f"{option} is not an option")
 
     def practice_flashcards(self) -> None:
-        if self.flashcards:
-            for card in self.flashcards:
-                template = f'Question: {card.question}\nPlease press "y" to see the answer or press "n" to skip:\n'
-                while (option := input(template)) not in ('y', 'n'):
+        flashcards = self.session.query(flashcard.Flashcard)
+        if flashcards.all():
+            for card in flashcards.all():
+                template = f'Question: {card.question}\npress "y" to see the answer:\npress "n" to skip:\npress "u" to update:\n'
+                while (option := input(template)) not in ('y', 'n', 'u'):
                     print(f"{option} is not an option")
-                if option == 'y':
-                    print(f"\nAnswer: {card.answer}")
+                match option:
+                    case 'y':
+                        print(f"\nAnswer: {card.answer}")
+                    case 'u':
+                        while (update_option := input('press "d" to delete the flashcard:\npress "e" to edit the flashcard:\n')) not in ('d', 'e'):
+                            print(f"{update_option} is not an option")
+                        match update_option:
+                            case 'e':
+                                new_question = input(f"current question: {card.question}\nplease write a new question:\n")
+                                if new_question:
+                                    flashcards.filter(flashcard.Flashcard.id == card.id).update({'question': new_question})
+                                new_answer = input(f"current answer: {card.answer}\nplease write a new answer:\n")
+                                if new_answer:
+                                    flashcards.filter(flashcard.Flashcard.id == card.id).update({'answer': new_answer})
+                                self.session.commit()
+                            case 'd':
+                                flashcards.filter(flashcard.Flashcard.id == card.id).delete()
+                                self.session.commit()
         else:
-            print("There is no flashcard to practice!")
+            print("There are no flashcards to practice!")
 
     def main(self) -> None:
         while (option := self.get_option()) != "3":
