@@ -26,15 +26,13 @@ class Tool:
     def practice_flashcards(self) -> None:
         flashcards = self.session.query(flashcard.Flashcard)
         if not flashcards.all():
-            print("There are no flashcards to practice!")
+            print("There is no flashcard to practice!")
             return
         for card in flashcards.all():
             print(f'Question: {card.question}\npress "y" to see the answer:\npress "n" to skip:\npress "u" to update:')
             while (option := input()) not in ('y', 'n', 'u'):
                 print(f"{option} is not an option")
-            if option == 'y':
-                print(f"\nAnswer: {card.answer}")
-            elif option == 'u':
+            if option == 'u':
                 print('press "d" to delete the flashcard:\npress "e" to edit the flashcard:')
                 while (update_option := input()) not in ('d', 'e'):
                     print(f"{update_option} is not an option")
@@ -46,7 +44,17 @@ class Tool:
                     if new_fields:
                         flashcards.filter(flashcard.Flashcard.id == card.id).update(new_fields)
                 elif update_option == 'd':
-                    flashcards.filter(flashcard.Flashcard.id == card.id).delete()
+                    self.session.delete(card)
+            elif option == 'y':
+                print(f"\nAnswer: {card.answer}")
+                print('press "y" if your answer is correct:\npress "n" if your answer is wrong:')
+                while (learn_success := input()) not in ('y', 'n'):
+                    print(f"{learn_success} is not an option")
+                if learn_success == 'y':
+                    flashcards.filter(flashcard.Flashcard.id == card.id).update({'box': flashcard.Flashcard.box + 1})
+                else:
+                    flashcards.filter(flashcard.Flashcard.id == card.id).update({'box': 0})
+        flashcards.filter(flashcard.Flashcard.box == 3).delete()
         self.session.commit()
 
     def main(self) -> None:
