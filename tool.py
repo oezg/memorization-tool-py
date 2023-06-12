@@ -1,6 +1,12 @@
 import flashcard
 
 
+def submenu_option(*alternatives):
+    while (option := input()) not in alternatives:
+        print(f"{option} is not an option")
+    return option
+
+
 class Tool:
     def __init__(self) -> None:
         self.session = flashcard.get_session()
@@ -30,12 +36,10 @@ class Tool:
             return
         for card in flashcards.all():
             print(f'Question: {card.question}\npress "y" to see the answer:\npress "n" to skip:\npress "u" to update:')
-            while (option := input()) not in ('y', 'n', 'u'):
-                print(f"{option} is not an option")
+            option = submenu_option('y', 'n', 'u')
             if option == 'u':
                 print('press "d" to delete the flashcard:\npress "e" to edit the flashcard:')
-                while (update_option := input()) not in ('d', 'e'):
-                    print(f"{update_option} is not an option")
+                update_option = submenu_option('d', 'e')
                 if update_option == 'e':
                     new_fields = {key: value for key, value in {
                         'question': input(f"current question: {card.question}\nplease write a new question:\n"),
@@ -48,8 +52,7 @@ class Tool:
             elif option == 'y':
                 print(f"\nAnswer: {card.answer}")
                 print('press "y" if your answer is correct:\npress "n" if your answer is wrong:')
-                while (learn_success := input()) not in ('y', 'n'):
-                    print(f"{learn_success} is not an option")
+                learn_success = submenu_option('y', 'n')
                 if learn_success == 'y':
                     flashcards.filter(flashcard.Flashcard.id == card.id).update({'box': flashcard.Flashcard.box + 1})
                 else:
