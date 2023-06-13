@@ -1,75 +1,68 @@
-import flashcard
+from flashcard import Flashcard, get_session
 
 
-def submenu_option(*alternatives):
-    while (option := input()) not in alternatives:
+def get_option(menu, *alternatives):
+    while (option := input(menu + '\n')) not in alternatives:
         print(f"{option} is not an option")
     return option
 
 
 class Tool:
     def __init__(self) -> None:
-        self.session = flashcard.get_session()
-        self.menu = {
-            "1": ("Add flashcards", self.add_flashcards),
-            "2": ("Practice flashcards", self.practice_flashcards),
-            "3": ("Exit",),
-        }
+        self.session = get_session()
+
+    def main(self) -> None:
+        option = get_option('1. Add flashcards\n2. Practice flashcards\n3. Exit', '1', '2', '3')
+        if option == '1':
+            self.add_flashcards()
+        elif option == '2':
+            self.practice_flashcards()
+        print("Bye!")
 
     def add_flashcards(self) -> None:
-        while (option := input("1. Add a new flashcard\n2. Exit\n")) != "2":
-            if option == "1":
-                while not (question := input("Question:\n").strip()):
-                    ...
-                while not (answer := input("Answer:\n").strip()):
-                    ...
-                card = flashcard.Flashcard(question=question, answer=answer)
-                self.session.add(card)
-                self.session.commit()
-            else:
-                print(f"{option} is not an option")
+        option = get_option("1. Add a new flashcard\n2. Exit", '1', '2')
+        if option == "1":
+            while not (question := input("Question:\n").strip()):
+                ...
+            while not (answer := input("Answer:\n").strip()):
+                ...
+            card = Flashcard(question=question, answer=answer)
+            self.session.add(card)
+            self.session.commit()
+            self.add_flashcards()
 
     def practice_flashcards(self) -> None:
-        flashcards = self.session.query(flashcard.Flashcard)
+        flashcards = self.session.query(Flashcard)
         if not flashcards.all():
             print("There is no flashcard to practice!")
             return
         for card in flashcards.all():
-            print(f'Question: {card.question}\npress "y" to see the answer:\npress "n" to skip:\npress "u" to update:')
-            option = submenu_option('y', 'n', 'u')
+            print(f'Question: {card.question}')
+            option = get_option('press "y" to see the answer:\npress "n" to skip:\npress "u" to update:', 'y', 'n', 'u')
             if option == 'u':
-                print('press "d" to delete the flashcard:\npress "e" to edit the flashcard:')
-                update_option = submenu_option('d', 'e')
-                if update_option == 'e':
-                    new_fields = {key: value for key, value in {
-                        'question': input(f"current question: {card.question}\nplease write a new question:\n"),
-                        'answer': input(f"current answer: {card.answer}\nplease write a new answer:\n")
-                    }.items() if value}
-                    if new_fields:
-                        flashcards.filter(flashcard.Flashcard.id == card.id).update(new_fields)
-                elif update_option == 'd':
-                    self.session.delete(card)
+                self.update_flashcard(card)
             elif option == 'y':
-                print(f"\nAnswer: {card.answer}")
-                print('press "y" if your answer is correct:\npress "n" if your answer is wrong:')
-                learn_success = submenu_option('y', 'n')
-                if learn_success == 'y':
-                    flashcards.filter(flashcard.Flashcard.id == card.id).update({'box': flashcard.Flashcard.box + 1})
-                else:
-                    flashcards.filter(flashcard.Flashcard.id == card.id).update({'box': 0})
-        flashcards.filter(flashcard.Flashcard.box == 3).delete()
+                self.test_flashcard(card)
+        flashcards.filter(Flashcard.repetition == 3).delete()
         self.session.commit()
 
-    def main(self) -> None:
-        while (option := self.get_option()) != "3":
-            self.menu[option][1]() if option in self.menu else print(f"{option} is not an option")
-        print("Bye!")
+    def test_flashcard(self, card) -> None:
+        print(f"Answer: {card.answer}")
+        option = get_option('press "y" if your answer is correct:\npress "n" if your answer is wrong:', 'y', 'n')
+        self.session.query(Flashcard).filter(Flashcard.id == card.id)\
+            .update({'repetition': Flashcard.repetition + 1 if option == 'y' else 0})
 
-    def get_menu(self) -> str:
-        return "\n".join(f"{i}. {option[0]}" for i, option in self.menu.items())
-
-    def get_option(self) -> str:
-        return input(self.get_menu() + "\n")
+    def update_flashcard(self, card) -> None:
+        option = get_option('press "d" to delete the flashcard:\npress "e" to edit the flashcard:', 'd', 'e')
+        if option == 'd':
+            self.session.delete(card)
+            return
+        new_fields = {key: value for key, value in {
+            'question': input(f"current question: {card.question}\nplease write a new question:\n"),
+            'answer': input(f"current answer: {card.answer}\nplease write a new answer:\n")
+        }.items() if value}
+        if new_fields:
+            self.session.query(Flashcard).filter(Flashcard.id == card.id).update(new_fields)
 
 
 if __name__ == '__main__':

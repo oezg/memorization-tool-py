@@ -11,7 +11,7 @@ class Flashcard(Base):
     id = Column(Integer, primary_key=True)
     question = Column(String)
     answer = Column(String)
-    box = Column(Integer, default=0)
+    repetition = Column(Integer, default=0)
 
 
 engine = create_engine('sqlite:///flashcard.db?check_same_thread=False')
